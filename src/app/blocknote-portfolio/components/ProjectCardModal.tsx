@@ -69,7 +69,7 @@ export default function ProjectCardModal({
         editor.replaceBlocks(editor.document, nextContent);
       }
     } catch {}
-  }, [initialProps]);
+  }, [initialProps, editor]);
 
   if (!isOpen || !isClient) return null;
 
