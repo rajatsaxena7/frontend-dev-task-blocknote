@@ -3,7 +3,7 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote, SuggestionMenuController } from "@blocknote/react";
@@ -23,14 +23,12 @@ export default function BlockNoteEditor() {
     setIsClient(true);
   }, []);
 
-  const schema = useMemo(() => (
-    BlockNoteSchema.create({
-      blockSpecs: {
-        ...defaultBlockSpecs,
-        projectCard: ProjectCardSpec,
-      },
-    })
-  ), []);
+  const schema = BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs,
+      projectCard: ProjectCardSpec,
+    },
+  });
 
   const editor = useCreateBlockNote({
     schema,
@@ -40,14 +38,17 @@ export default function BlockNoteEditor() {
     ],
   });
 
-  const { saveContent, saveState } = useContentManager({
+  const {
+    saveContent,
+    saveState,
+  } = useContentManager({
     editor: editor as any, 
     contentId: 'portfolio-content',
     autoSave: true,
     autoSaveInterval: 30000, 
   });
 
-  const projectCardItem = useMemo(() => {
+  const projectCardItem = React.useMemo(() => {
     if (!editor) return null;
     return {
       title: "Project Card",
@@ -80,8 +81,9 @@ export default function BlockNoteEditor() {
     };
   }, [editor]);
 
-  const getItems = useCallback(async (query: string) => {
+  const getItems = React.useCallback(async (query: string) => {
     if (!editor) return [];
+    
     const defaultItems = [
       {
         title: "Heading 1",
@@ -146,53 +148,6 @@ export default function BlockNoteEditor() {
     );
   }, [editor, projectCardItem]);
 
-  const handleExportToPDF = useCallback(async () => {
-    if (!editorRef.current) return;
-    const canvas = await html2canvas(editorRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save("blocknote-export.pdf");
-      return;
-    }
-
-    let remainingHeight = imgHeight;
-    let y = 0;
-    const pageCanvas = document.createElement("canvas");
-    const pageCtx = pageCanvas.getContext("2d");
-    const pageHeightPx = (pageHeight * canvas.width) / pageWidth;
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = pageHeightPx;
-
-    while (remainingHeight > 0 && pageCtx) {
-      pageCtx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
-      pageCtx.drawImage(
-        canvas,
-        0,
-        y,
-        canvas.width,
-        Math.min(pageHeightPx, canvas.height - y),
-        0,
-        0,
-        pageCanvas.width,
-        Math.min(pageHeightPx, canvas.height - y)
-      );
-      const pageImgData = pageCanvas.toDataURL("image/png");
-      pdf.addImage(pageImgData, "PNG", 0, 0, pageWidth, pageHeight);
-      remainingHeight -= pageHeight;
-      y += pageHeightPx;
-      if (remainingHeight > 0) pdf.addPage();
-    }
-
-    pdf.save("blocknote-export.pdf");
-  }, []);
-
 
   if (!isClient) {
     return (
@@ -218,7 +173,51 @@ export default function BlockNoteEditor() {
             className="justify-end"
           />
           <button
-            onClick={handleExportToPDF}
+            onClick={async () => {
+              if (!editorRef.current) return;
+              const canvas = await html2canvas(editorRef.current, { scale: 2 });
+              const imgData = canvas.toDataURL("image/png");
+              const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+              const pageWidth = pdf.internal.pageSize.getWidth();
+              const pageHeight = pdf.internal.pageSize.getHeight();
+              const imgWidth = pageWidth;
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+              let position = 0;
+
+              if (imgHeight <= pageHeight) {
+                pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+              } else {
+                let remainingHeight = imgHeight;
+                let y = 0;
+                const pageCanvas = document.createElement("canvas");
+                const pageCtx = pageCanvas.getContext("2d");
+                const pageHeightPx = (pageHeight * canvas.width) / pageWidth;
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = pageHeightPx;
+
+                while (remainingHeight > 0 && pageCtx) {
+                  pageCtx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+                  pageCtx.drawImage(
+                    canvas,
+                    0,
+                    y,
+                    canvas.width,
+                    Math.min(pageHeightPx, canvas.height - y),
+                    0,
+                    0,
+                    pageCanvas.width,
+                    Math.min(pageHeightPx, canvas.height - y)
+                  );
+                  const pageImgData = pageCanvas.toDataURL("image/png");
+                  pdf.addImage(pageImgData, "PNG", 0, 0, pageWidth, pageHeight);
+                  remainingHeight -= pageHeight;
+                  y += pageHeightPx;
+                  if (remainingHeight > 0) pdf.addPage();
+                }
+              }
+
+              pdf.save("blocknote-export.pdf");
+            }}
             className="px-4 py-2 rounded-md font-medium text-sm bg-gray-800 text-white hover:bg-gray-900"
           >
             Export to PDF

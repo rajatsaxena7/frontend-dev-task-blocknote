@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 export type ProjectCardProps = {
   title: string;
   imageUrl: string;
@@ -73,7 +73,7 @@ export default function ProjectCardModal({
 
   if (!isOpen || !isClient) return null;
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: ProjectCardProps = {
       ...formData,
@@ -81,7 +81,7 @@ export default function ProjectCardModal({
     };
     onSave(next);
     onClose();
-  }, [formData, editor, onSave, onClose]);
+  };
 
 
   return (
