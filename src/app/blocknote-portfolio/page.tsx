@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-// Dynamic import to ensure BlockNote only loads on client-side
 const BlockNoteEditor = dynamic(() => import("./components/BlockNoteEditor"), {
   ssr: false,
   loading: () => (

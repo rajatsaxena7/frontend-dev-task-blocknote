@@ -1,3 +1,22 @@
 {
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "@next/next/no-img-element": "off",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "react-hooks/exhaustive-deps": "off",
+    "@typescript-eslint/no-explicit-any": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/app/blocknote-portfolio/**/*.{ts,tsx}"],
+      "rules": {
+        "@next/next/no-img-element": "off"
+      }
+    }
+  ]
+}
+
+{
   "extends": "next/core-web-vitals"
 }
